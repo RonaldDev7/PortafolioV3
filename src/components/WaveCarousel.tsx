@@ -1,35 +1,60 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { MAIN_PROJECTS } from "@/data/projects";
 
 export function WaveCarousel() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scrollVelocity, setScrollVelocity] = useState(0);
+  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    let lastScroll = window.scrollY;
-    let timeout: NodeJS.Timeout;
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+    let velocity = 0;
+    let animId: number;
+
+    const updateCards = () => {
+      // Smooth decay of velocity towards 0
+      velocity *= 0.88;
+
+      if (Math.abs(velocity) < 0.05) {
+        velocity = 0;
+      }
+
+      cardsRef.current.forEach((card, idx) => {
+        if (!card) return;
+        const direction = idx % 2 === 0 ? 0.75 : -0.75;
+        const skew = velocity * direction;
+        const scale = Math.abs(velocity) > 0.1 ? 0.985 : 1;
+        card.style.transform = `perspective(1000px) skewY(${skew.toFixed(2)}deg) scale(${scale})`;
+      });
+
+      if (Math.abs(velocity) > 0.05) {
+        animId = requestAnimationFrame(updateCards);
+      } else {
+        ticking = false;
+      }
+    };
 
     const handleScroll = () => {
-      const currentScroll = window.scrollY;
-      const delta = currentScroll - lastScroll;
-      lastScroll = currentScroll;
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY;
+      lastScrollY = currentScrollY;
 
-      // Map scroll speed to wave skew angle (max 12deg)
-      const clamped = Math.max(-14, Math.min(14, delta * 0.45));
-      setScrollVelocity(clamped);
+      // Clamped skew velocity (max 10deg)
+      const targetVelocity = Math.max(-10, Math.min(10, delta * 0.35));
+      velocity += (targetVelocity - velocity) * 0.6;
 
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        setScrollVelocity(0);
-      }, 120);
+      if (!ticking) {
+        ticking = true;
+        animId = requestAnimationFrame(updateCards);
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      clearTimeout(timeout);
+      if (animId) cancelAnimationFrame(animId);
     };
   }, []);
 
@@ -58,11 +83,12 @@ export function WaveCarousel() {
         {MAIN_PROJECTS.map((project, idx) => (
           <div
             key={project.id}
-            className="flex-shrink-0 w-[320px] md:w-[440px] snap-center rounded-2xl bg-[#09080A] text-[#F5F3F2] p-8 flex flex-col justify-between shadow-2xl transition-transform duration-300 ease-out border border-[#09080A]/10 hover:border-[#530570]/50"
+            ref={(el) => {
+              cardsRef.current[idx] = el;
+            }}
+            className="flex-shrink-0 w-[320px] md:w-[440px] snap-center rounded-2xl bg-[#09080A] text-[#F5F3F2] p-8 flex flex-col justify-between shadow-2xl transition-transform duration-100 ease-out border border-[#09080A]/10 hover:border-[#530570]/50 will-change-transform transform-gpu"
             style={{
-              transform: `perspective(1000px) skewY(${scrollVelocity * (idx % 2 === 0 ? 0.8 : -0.8)}deg) scale(${
-                scrollVelocity !== 0 ? 0.98 : 1
-              })`,
+              transform: "perspective(1000px) skewY(0deg) scale(1)",
               transformOrigin: "center center",
             }}
           >
@@ -102,13 +128,17 @@ export function WaveCarousel() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-[#F5F3F2]/10 text-xs">
-                <span className="text-[10px] font-mono text-[#9E9EA7]/70">
-                  {project.stats}
-                </span>
-                <span className="font-semibold text-[#F5F3F2] hover:text-[#530570] transition-colors flex items-center gap-1">
-                  Explorar ↗
-                </span>
+              <div className="flex items-center justify-between pt-4 border-t border-[#F5F3F2]/10">
+                <span className="text-xs font-mono text-[#9E9EA7]/70">Caso de estudio</span>
+                <a
+                  href={`#projects`}
+                  className="text-xs font-semibold text-[#F5F3F2] hover:text-[#530570] transition-colors flex items-center gap-1 group"
+                >
+                  <span>Explorar</span>
+                  <span className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200">
+                    ↗
+                  </span>
+                </a>
               </div>
             </div>
           </div>

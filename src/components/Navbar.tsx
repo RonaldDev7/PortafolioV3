@@ -2,29 +2,24 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 
-interface NavbarProps {
-  currentLang?: "es" | "en";
-  onLangToggle?: (lang: "es" | "en") => void;
-}
-
-export function Navbar({ currentLang = "es", onLangToggle }: NavbarProps) {
-  const [lang, setLang] = useState<"es" | "en">(currentLang);
+export function Navbar() {
+  const { lang, toggleLang } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
+    let prevScrolled = false;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
+      const isScrolled = window.scrollY > 40;
+      if (isScrolled !== prevScrolled) {
+        prevScrolled = isScrolled;
+        setScrolled(isScrolled);
+      }
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const handleToggle = () => {
-    const nextLang = lang === "es" ? "en" : "es";
-    setLang(nextLang);
-    onLangToggle?.(nextLang);
-  };
 
   const navLinks = {
     es: [
@@ -77,10 +72,10 @@ export function Navbar({ currentLang = "es", onLangToggle }: NavbarProps) {
       <div className="flex items-center gap-4">
         {/* Language Switcher */}
         <button
-          onClick={handleToggle}
+          onClick={toggleLang}
           type="button"
           aria-label="Toggle language"
-          className="text-[11px] tracking-widest font-mono border border-[#F5F3F2]/20 hover:border-[#530570] px-2.5 py-1 rounded text-[#F5F3F2]/80 hover:text-[#F5F3F2] hover:bg-[#530570]/10 transition-all"
+          className="text-[11px] tracking-widest font-mono border border-[#F5F3F2]/20 hover:border-[#530570] px-2.5 py-1 rounded text-[#F5F3F2]/80 hover:text-[#F5F3F2] hover:bg-[#530570]/10 transition-all cursor-pointer"
         >
           <span className={lang === "es" ? "font-bold text-[#F5F3F2]" : "text-[#F5F3F2]/40"}>
             ES
