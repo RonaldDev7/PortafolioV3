@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { KineticIntro } from "@/components/KineticIntro";
 import { PortraitParticles } from "@/components/PortraitParticles";
+import { WaveCarousel } from "@/components/WaveCarousel";
+import { HexagonalDrum } from "@/components/HexagonalDrum";
 
 export default function Home() {
   const [introFinished, setIntroFinished] = useState(false);
@@ -12,16 +14,17 @@ export default function Home() {
       {/* PoC A: Kinetic Intro Component */}
       <KineticIntro onComplete={() => setIntroFinished(true)} />
 
-      <main className="flex-1 flex flex-col items-center justify-center min-h-screen px-6 text-center relative overflow-hidden bg-[#09080A]">
+      <main className="flex-1 flex flex-col items-center justify-center min-h-screen relative overflow-hidden bg-[#09080A]">
         {/* Background Ambient Glow */}
         <div
           className="absolute w-[600px] h-[600px] rounded-full bg-[#530570]/20 blur-[150px] pointer-events-none -top-24 left-1/2 -translate-x-1/2"
           aria-hidden="true"
         />
 
+        {/* Hero Section with 3D Point Cloud Portrait */}
         <section
           id="hero"
-          className={`relative z-10 max-w-5xl mx-auto space-y-4 pt-24 pb-16 transition-opacity duration-1000 ${
+          className={`relative z-10 max-w-5xl mx-auto space-y-4 pt-28 pb-16 px-6 text-center transition-opacity duration-1000 ${
             introFinished ? "opacity-100" : "opacity-90"
           }`}
         >
@@ -30,7 +33,6 @@ export default function Home() {
             Full-Stack Developer
           </div>
 
-          {/* PoC B: 3D Point Cloud Portrait + PORTFOLIO Typography */}
           <div className="relative my-2">
             <PortraitParticles />
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-[#FFFFFF] via-[#F5F3F2] to-[#6E7179] uppercase font-sans -mt-16 md:-mt-24 z-20 relative pointer-events-none drop-shadow-[0_16px_32px_rgba(0,0,0,0.9)]">
@@ -57,6 +59,16 @@ export default function Home() {
             </a>
           </div>
         </section>
+
+        {/* PoC C: Wave Shader Gallery */}
+        <div className="w-full">
+          <WaveCarousel />
+        </div>
+
+        {/* PoC D: 3D Hexagonal Drum Showcase */}
+        <div className="w-full">
+          <HexagonalDrum />
+        </div>
       </main>
     </>
   );
