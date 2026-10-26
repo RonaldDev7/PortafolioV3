@@ -32,7 +32,7 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
         return;
       }
 
-      // Starfield initialization
+      // Starfield Canvas setup
       const canvas = starfieldCanvasRef.current;
       let animId: number;
       if (canvas) {
@@ -56,7 +56,7 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
           });
         }
 
-        const speed = 0.45;
+        const speed = 0.4;
 
         const renderStarfield = () => {
           if (!ctx || !canvas) return;
@@ -92,7 +92,54 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
         renderStarfield();
       }
 
-      // Master Timeline: Lento, pausado, con física de ensamblado 3D real
+      const dot = dotRef.current;
+      const glow = glowRef.current;
+      const nameLetters = nameLettersRef.current
+        ? (Array.from(nameLettersRef.current.children) as HTMLElement[])
+        : [];
+      const portLetters = portfolioLettersRef.current
+        ? (Array.from(portfolioLettersRef.current.children) as HTMLElement[])
+        : [];
+      const starfield = starfieldCanvasRef.current;
+
+      // 1. ESTADO INICIAL OBLIGATORIO:
+      // Ocultar e inicializar posiciones para que no haya solapamiento
+      gsap.set(dot, {
+        opacity: 1,
+        scale: 1,
+        y: -window.innerHeight * 0.65,
+        visibility: "visible",
+      });
+      gsap.set(glow, { opacity: 0, scale: 0.3, visibility: "visible" });
+      gsap.set(starfield, { opacity: 0 });
+
+      // "RONALD": Ubicado en los laterales de la pantalla (fuera de vista)
+      nameLetters.forEach((el, idx) => {
+        const fromLeft = idx < 3;
+        gsap.set(el, {
+          opacity: 0,
+          x: fromLeft ? -window.innerWidth * 0.7 : window.innerWidth * 0.7,
+          y: 0,
+          scale: 0.8,
+          filter: "blur(18px)",
+          visibility: "visible",
+        });
+      });
+
+      // "PORTFOLIO": Ubicado en los laterales (fuera de vista)
+      portLetters.forEach((el, idx) => {
+        const fromLeft = idx < 5;
+        gsap.set(el, {
+          opacity: 0,
+          x: fromLeft ? -window.innerWidth * 0.7 : window.innerWidth * 0.7,
+          y: 0,
+          scale: 0.8,
+          filter: "blur(18px)",
+          visibility: "visible",
+        });
+      });
+
+      // 2. TIMELINE MASTER CONTROLADO
       const tl = gsap.timeline({
         onComplete: () => {
           gsap.to(containerRef.current, {
@@ -108,154 +155,102 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
         },
       });
 
-      const dot = dotRef.current;
-      const glow = glowRef.current;
-      const nameLetters = nameLettersRef.current
-        ? gsap.utils.toArray<HTMLElement>(nameLettersRef.current.children)
-        : [];
-      const portLetters = portfolioLettersRef.current
-        ? gsap.utils.toArray<HTMLElement>(portfolioLettersRef.current.children)
-        : [];
-      const starfield = starfieldCanvasRef.current;
-
-      // 1. Initial State: Letras colapsadas en el centro 3D detrás del punto de luz
-      gsap.set(dot, { scale: 0, opacity: 0 });
-      gsap.set(glow, { scale: 0.5, opacity: 0 });
-
-      gsap.set(nameLetters, {
-        opacity: 0,
-        scale: 0.1,
-        y: 60,
-        z: -150,
-        rotationX: -45,
-        rotationY: () => (Math.random() - 0.5) * 60,
-        filter: "blur(14px)",
-        transformPerspective: 1200,
-        transformOrigin: "center center",
-      });
-
-      gsap.set(portLetters, {
-        opacity: 0,
-        scale: 0.1,
-        y: 60,
-        z: -150,
-        rotationX: -45,
-        rotationY: () => (Math.random() - 0.5) * 60,
-        filter: "blur(14px)",
-        transformPerspective: 1200,
-        transformOrigin: "center center",
-      });
-
-      gsap.set(starfield, { opacity: 0 });
-
-      // 2. Coreografía:
-      tl
-        // Fase 1: Punto de luz central con iluminación envolvente
-        .to(dot, {
-          scale: 1,
-          opacity: 1,
-          duration: 1.2,
+      // PASO 1: EL PUNTO CAE DESDE ARRIBA HASTA EL CENTRO CON REBOTE SUTIL
+      tl.to(dot, {
+        y: 0,
+        duration: 1.5,
+        ease: "bounce.out",
+      })
+      // Encendido del resplandor al tocar el centro
+      .to(
+        glow,
+        {
+          opacity: 0.9,
+          scale: 1.25,
+          duration: 1.0,
           ease: "power2.out",
-        })
-        .to(
-          glow,
-          {
-            scale: 1.2,
-            opacity: 1,
-            duration: 1.5,
-            ease: "power2.out",
+        },
+        "-=0.7"
+      )
+      // El punto destella intensamente y se absorbe
+      .to(dot, {
+        scale: 2.2,
+        filter: "drop-shadow(0 0 25px #FFFFFF)",
+        duration: 0.6,
+        ease: "sine.inOut",
+      })
+      .to(dot, {
+        scale: 0,
+        opacity: 0,
+        duration: 0.4,
+        ease: "power2.in",
+      })
+
+      // PASO 2: LAS LETRAS DE "RONALD" ENTRAN DESDE LOS LATERALES Y SE ARMAN
+      .to(
+        nameLetters,
+        {
+          opacity: 1,
+          x: 0,
+          scale: 1,
+          filter: "blur(0px)",
+          stagger: {
+            each: 0.12,
+            from: "edges", // Entran de afuera hacia el centro
           },
-          "-=1.0"
-        )
-        // Pulso brillante que anticipa el nacimiento de las letras
-        .to(dot, {
-          scale: 2.4,
-          filter: "drop-shadow(0 0 30px #FFFFFF)",
-          duration: 0.8,
-          ease: "sine.inOut",
-        })
-        .to(dot, {
-          scale: 0,
-          opacity: 0,
-          duration: 0.5,
-          ease: "power3.in",
-        })
-        .to(
-          glow,
-          {
-            scale: 2.2,
-            opacity: 0.35,
-            duration: 0.5,
-            ease: "power2.out",
+          duration: 1.2,
+          ease: "power3.out",
+        },
+        "-=0.2"
+      )
+
+      // Pausa contemplativa para apreciar "RONALD"
+      .to({}, { duration: 1.6 })
+
+      // PASO 3: "RONALD" SE DISPERSA Y SALE HACIA LOS MISMOS LATERALES
+      .to(nameLetters, {
+        opacity: 0,
+        x: (idx) => (idx < 3 ? -window.innerWidth * 0.7 : window.innerWidth * 0.7),
+        filter: "blur(16px)",
+        stagger: {
+          each: 0.08,
+          from: "center", // Se abren hacia afuera
+        },
+        duration: 0.9,
+        ease: "power3.in",
+      })
+
+      // PASO 4: SALEN LAS LETRAS DE "PORTFOLIO" DESDE LOS LATERALES
+      .to(
+        portLetters,
+        {
+          opacity: 1,
+          x: 0,
+          scale: 1,
+          filter: "blur(0px)",
+          stagger: {
+            each: 0.1,
+            from: "edges",
           },
-          "-=0.4"
-        )
+          duration: 1.3,
+          ease: "power3.out",
+        },
+        "-=0.1"
+      )
 
-        // Fase 2: Las letras de "RONALD" se ensamblan una a una desde el centro (física 3D controlada)
-        .to(
-          nameLetters,
-          {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            z: 0,
-            rotationX: 0,
-            rotationY: 0,
-            filter: "blur(0px)",
-            stagger: 0.22, // Lento y pausado
-            duration: 1.1,
-            ease: "back.out(1.8)",
-          },
-          "-=0.2"
-        )
+      // El campo de estrellas emerge suavemente en el fondo
+      .to(
+        starfield,
+        {
+          opacity: 1,
+          duration: 1.4,
+          ease: "power2.out",
+        },
+        "-=0.8"
+      )
 
-        // Sostener el nombre "RONALD" para apreciarlo
-        .to({}, { duration: 1.6 })
-
-        // Fase 3: Las letras de "RONALD" se desvanecen y disuelven en orden
-        .to(nameLetters, {
-          opacity: 0,
-          y: -40,
-          z: 80,
-          scale: 0.85,
-          rotationX: 30,
-          filter: "blur(12px)",
-          stagger: 0.1, // Borrado secuencial suave
-          duration: 0.9,
-          ease: "power2.inOut",
-        })
-
-        // Fase 4: Se arma la palabra "PORTFOLIO" letra por letra con la misma elegancia
-        .to(
-          portLetters,
-          {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            z: 0,
-            rotationX: 0,
-            rotationY: 0,
-            filter: "blur(0px)",
-            stagger: 0.16, // Ensamblado rítmico pausado
-            duration: 1.2,
-            ease: "back.out(1.7)",
-          },
-          "-=0.3"
-        )
-
-        // Fase 5: Revelación del campo de estrellas de fondo
-        .to(
-          starfield,
-          {
-            opacity: 1,
-            duration: 1.5,
-            ease: "power2.out",
-          },
-          "-=0.9"
-        )
-
-        // Mantener "PORTFOLIO" antes de la transición suave a la página
-        .to({}, { duration: 1.8 });
+      // Sostener "PORTFOLIO" antes de la transición fluida al Hero
+      .to({}, { duration: 1.8 });
     },
     { scope: containerRef }
   );
@@ -274,48 +269,46 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
       {/* Starfield Background Canvas */}
       <canvas
         ref={starfieldCanvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none"
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-0"
       />
 
       {/* Atmospheric Central Violet / White Glow */}
       <div
         ref={glowRef}
-        className="absolute w-[500px] h-[500px] rounded-full bg-gradient-to-r from-[#530570]/30 to-[#F5F3F2]/10 blur-[140px] pointer-events-none opacity-0"
+        className="absolute w-[500px] h-[500px] rounded-full bg-gradient-to-r from-[#530570]/30 to-[#F5F3F2]/10 blur-[140px] pointer-events-none invisible"
         aria-hidden="true"
       />
 
       {/* Center Singular Light Dot */}
       <div
         ref={dotRef}
-        className="w-4 h-4 rounded-full bg-[#FFFFFF] shadow-[0_0_30px_10px_#FFFFFF,0_0_60px_20px_#530570] absolute z-20 opacity-0"
+        className="w-4 h-4 rounded-full bg-[#FFFFFF] shadow-[0_0_30px_10px_#FFFFFF,0_0_60px_20px_#530570] absolute z-20 invisible"
       />
 
-      {/* 1. Assembling Name: RONALD (oculto por defecto con opacity-0 para evitar flash inicial) */}
+      {/* 1. Word: RONALD (oculto estrictamente hasta que GSAP lo anime desde los laterales) */}
       <div
         ref={nameLettersRef}
         className="flex items-center justify-center gap-2 md:gap-4 text-5xl md:text-8xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-b from-[#FFFFFF] via-[#F5F3F2] to-[#6E7179] drop-shadow-[0_12px_28px_rgba(0,0,0,0.9)] z-10"
-        style={{ perspective: "1200px" }}
       >
         {nameChars.map((char, index) => (
           <span
             key={`char-ronald-${char}-${index}`}
-            className="inline-block transform-gpu opacity-0"
+            className="inline-block transform-gpu invisible"
           >
             {char}
           </span>
         ))}
       </div>
 
-      {/* 2. Target Word: PORTFOLIO (oculto por defecto con opacity-0) */}
+      {/* 2. Word: PORTFOLIO (oculto estrictamente hasta que GSAP lo anime desde los laterales) */}
       <div
         ref={portfolioLettersRef}
         className="absolute flex items-center justify-center gap-1.5 md:gap-3 text-5xl md:text-8xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-b from-[#FFFFFF] via-[#F5F3F2] to-[#6E7179] drop-shadow-[0_15px_32px_rgba(0,0,0,0.95)] z-10"
-        style={{ perspective: "1200px" }}
       >
         {portChars.map((char, index) => (
           <span
             key={`char-portfolio-${char}-${index}`}
-            className="inline-block transform-gpu opacity-0"
+            className="inline-block transform-gpu invisible"
           >
             {char}
           </span>
