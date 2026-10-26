@@ -28,8 +28,10 @@ export default function Home() {
         {/* 1. Hero Section with 3D Point Cloud Portrait */}
         <section
           id="hero"
-          className={`relative z-10 max-w-5xl mx-auto space-y-4 pt-28 pb-16 px-6 text-center transition-opacity duration-1000 ${
-            introFinished ? "opacity-100" : "opacity-90"
+          className={`relative z-10 max-w-5xl mx-auto space-y-4 pt-28 pb-16 px-6 text-center transition-all duration-1000 ${
+            introFinished
+              ? "opacity-100 pointer-events-auto visible"
+              : "opacity-0 pointer-events-none invisible"
           }`}
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#F5F3F2]/10 bg-[#F5F3F2]/5 text-[11px] font-mono tracking-widest text-[#F5F3F2]/80 uppercase">
