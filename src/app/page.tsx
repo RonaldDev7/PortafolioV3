@@ -3,15 +3,19 @@
 import React, { useState } from "react";
 import { KineticIntro } from "@/components/KineticIntro";
 import { PortraitParticles } from "@/components/PortraitParticles";
+import { AboutVolumetric } from "@/components/AboutVolumetric";
+import { TimelineSection } from "@/components/TimelineSection";
 import { WaveCarousel } from "@/components/WaveCarousel";
 import { HexagonalDrum } from "@/components/HexagonalDrum";
+import { ServicesAccordion } from "@/components/ServicesAccordion";
+import { ContactFooter } from "@/components/ContactFooter";
 
 export default function Home() {
   const [introFinished, setIntroFinished] = useState(false);
 
   return (
     <>
-      {/* PoC A: Kinetic Intro Component */}
+      {/* Cinematic Intro Preloader */}
       <KineticIntro onComplete={() => setIntroFinished(true)} />
 
       <main className="flex-1 flex flex-col items-center justify-center min-h-screen relative overflow-hidden bg-[#09080A]">
@@ -21,7 +25,7 @@ export default function Home() {
           aria-hidden="true"
         />
 
-        {/* Hero Section with 3D Point Cloud Portrait */}
+        {/* 1. Hero Section with 3D Point Cloud Portrait */}
         <section
           id="hero"
           className={`relative z-10 max-w-5xl mx-auto space-y-4 pt-28 pb-16 px-6 text-center transition-opacity duration-1000 ${
@@ -60,14 +64,34 @@ export default function Home() {
           </div>
         </section>
 
-        {/* PoC C: Wave Shader Gallery */}
+        {/* 2. Sobre Mí & Filosofía Cinematográfica con Haz Volumétrico */}
+        <div className="w-full">
+          <AboutVolumetric />
+        </div>
+
+        {/* 3. Timeline Histórico con Tipografía Kinética */}
+        <div className="w-full">
+          <TimelineSection />
+        </div>
+
+        {/* 4. Galería Wave Shader con Física y Deformación */}
         <div className="w-full">
           <WaveCarousel />
         </div>
 
-        {/* PoC D: 3D Hexagonal Drum Showcase */}
+        {/* 5. Prisma 3D Hexagonal con Casos de Estudio */}
         <div className="w-full">
           <HexagonalDrum />
+        </div>
+
+        {/* 6. Servicios e Ingeniería con Acordeón Satinado */}
+        <div className="w-full">
+          <ServicesAccordion />
+        </div>
+
+        {/* 7. Footer Monumental y Contacto */}
+        <div className="w-full">
+          <ContactFooter />
         </div>
       </main>
     </>
