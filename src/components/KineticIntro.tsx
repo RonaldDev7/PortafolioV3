@@ -11,8 +11,9 @@ interface KineticIntroProps {
 export function KineticIntro({ onComplete }: KineticIntroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
   const nameLettersRef = useRef<HTMLDivElement>(null);
-  const portfolioTextRef = useRef<HTMLHeadingElement>(null);
+  const portfolioLettersRef = useRef<HTMLDivElement>(null);
   const starfieldCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const [isFinished, setIsFinished] = useState(false);
@@ -32,14 +33,6 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
         return;
       }
 
-      // Check if already viewed in this browser session
-      const hasViewed = sessionStorage.getItem("intro_viewed");
-      if (hasViewed) {
-        setIsFinished(true);
-        onComplete?.();
-        return;
-      }
-
       // Starfield initialization
       const canvas = starfieldCanvasRef.current;
       let animId: number;
@@ -53,9 +46,8 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
         resize();
         window.addEventListener("resize", resize);
 
-        // Generate stars
         const stars: { x: number; y: number; z: number; o: number }[] = [];
-        const numStars = 250;
+        const numStars = 280;
         for (let i = 0; i < numStars; i++) {
           stars.push({
             x: (Math.random() - 0.5) * window.innerWidth * 2,
@@ -65,7 +57,7 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
           });
         }
 
-        const speed = 0.5;
+        const speed = 0.45;
 
         const renderStarfield = () => {
           if (!ctx || !canvas) return;
@@ -83,7 +75,7 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
               s.y = (Math.random() - 0.5) * canvas.height * 2;
             }
 
-            const k = 250 / s.z;
+            const k = 260 / s.z;
             const px = s.x * k + cx;
             const py = s.y * k + cy;
 
@@ -101,13 +93,13 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
         renderStarfield();
       }
 
+      // Master Timeline: Lento, cinematográfico y controlado
       const tl = gsap.timeline({
         onComplete: () => {
-          sessionStorage.setItem("intro_viewed", "true");
-          // Fade out intro layer
+          // Desvanecimiento suave final
           gsap.to(containerRef.current, {
             opacity: 0,
-            duration: 0.8,
+            duration: 1.2,
             ease: "power2.inOut",
             onComplete: () => {
               setIsFinished(true);
@@ -118,104 +110,135 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
         },
       });
 
-      // Elements
       const dot = dotRef.current;
-      const letters = nameLettersRef.current
+      const glow = glowRef.current;
+      const nameLetters = nameLettersRef.current
         ? gsap.utils.toArray<HTMLElement>(nameLettersRef.current.children)
         : [];
-      const portfolio = portfolioTextRef.current;
+      const portLetters = portfolioLettersRef.current
+        ? gsap.utils.toArray<HTMLElement>(portfolioLettersRef.current.children)
+        : [];
       const starfield = starfieldCanvasRef.current;
 
-      // 1. Initial State
+      // 1. Initial State: Todo oculto en oscuridad pura
       gsap.set(dot, { scale: 0, opacity: 0 });
-      gsap.set(letters, {
+      gsap.set(glow, { scale: 0.6, opacity: 0 });
+      gsap.set(nameLetters, {
         opacity: 0,
-        scale: 0.2,
-        y: () => (Math.random() - 0.5) * 200,
-        x: () => (Math.random() - 0.5) * 300,
-        rotationZ: () => (Math.random() - 0.5) * 120,
+        y: 40,
+        scale: 0.8,
+        filter: "blur(12px)",
         transformPerspective: 1000,
       });
-      gsap.set(portfolio, { opacity: 0, scale: 0.85, y: 30 });
+      gsap.set(portLetters, {
+        opacity: 0,
+        y: 45,
+        scale: 0.85,
+        filter: "blur(14px)",
+        transformPerspective: 1000,
+      });
       gsap.set(starfield, { opacity: 0 });
 
-      // 2. Timeline Coreography
+      // 2. Coreografía Lenta y Controlada:
       tl
-        // Step 1: Center dot pulse & flash (0.0s - 0.8s)
+        // Fase A: Silencio y respiración del punto con iluminación (0.0s - 2.0s)
         .to(dot, {
           scale: 1,
           opacity: 1,
-          duration: 0.4,
-          ease: "power3.out",
+          duration: 1.2,
+          ease: "power2.out",
         })
+        .to(
+          glow,
+          {
+            scale: 1.2,
+            opacity: 1,
+            duration: 1.4,
+            ease: "power2.out",
+          },
+          "-=1.0"
+        )
+        // Pulsación sutil y brillante antes de expandirse
         .to(dot, {
-          scale: 1.8,
-          duration: 0.3,
-          ease: "power1.inOut",
+          scale: 2.2,
+          filter: "drop-shadow(0 0 25px #FFFFFF)",
+          duration: 0.8,
+          ease: "sine.inOut",
         })
         .to(dot, {
           scale: 0,
           opacity: 0,
-          duration: 0.2,
-          ease: "power2.in",
-        })
-
-        // Step 2: Kinetic Letters burst and assemble into 'RONALD' (0.9s - 2.0s)
-        .to(
-          letters,
-          {
-            opacity: 1,
-            scale: 1,
-            x: 0,
-            y: 0,
-            rotationZ: 0,
-            stagger: {
-              each: 0.05,
-              from: "center",
-            },
-            duration: 0.8,
-            ease: "back.out(2)",
-          },
-          "-=0.1"
-        )
-
-        // Hold 'RONALD' momentarily
-        .to({}, { duration: 0.4 })
-
-        // Step 3: Morph / Collapse into 'PORTFOLIO' (2.4s - 3.2s)
-        .to(letters, {
-          scaleY: 0,
-          opacity: 0,
-          y: -20,
-          stagger: 0.03,
-          duration: 0.3,
-          ease: "power2.in",
+          duration: 0.6,
+          ease: "power3.in",
         })
         .to(
-          portfolio,
+          glow,
           {
-            opacity: 1,
-            scale: 1,
-            y: 0,
+            scale: 2.0,
+            opacity: 0.4,
             duration: 0.6,
-            ease: "power3.out",
-          },
-          "-=0.15"
-        )
-
-        // Step 4: Starfield explosion reveal (3.0s - 4.2s)
-        .to(
-          starfield,
-          {
-            opacity: 1,
-            duration: 0.8,
             ease: "power2.out",
           },
           "-=0.5"
         )
 
-        // Hold scene before smooth reveal transition
-        .to({}, { duration: 0.8 });
+        // Fase B: Armado elegante y pausado de "RONALD" letra por letra (2.2s - 4.2s)
+        .to(
+          nameLetters,
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            filter: "blur(0px)",
+            stagger: 0.15, // Aparición pausada y controlada
+            duration: 1.0,
+            ease: "power3.out",
+          },
+          "-=0.2"
+        )
+
+        // Retención contemplativa para leer el nombre
+        .to({}, { duration: 1.4 })
+
+        // Fase C: Desvanecimiento / borrado suave de "RONALD" (5.6s - 6.6s)
+        .to(nameLetters, {
+          opacity: 0,
+          y: -35,
+          scale: 0.9,
+          filter: "blur(10px)",
+          stagger: 0.08,
+          duration: 0.8,
+          ease: "power2.inOut",
+        })
+
+        // Fase D: Armado majestuoso de "PORTFOLIO" letra por letra (6.4s - 8.2s)
+        .to(
+          portLetters,
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            filter: "blur(0px)",
+            stagger: 0.12,
+            duration: 1.1,
+            ease: "power3.out",
+          },
+          "-=0.3"
+        )
+
+        // Fase E: Revelación de las estrellas cósmicas en el fondo
+        .to(
+          starfield,
+          {
+            opacity: 1,
+            duration: 1.4,
+            ease: "power2.out",
+          },
+          "-=0.8"
+        )
+
+        // Sostener la palabra PORTFOLIO para contemplación
+        .to({}, { duration: 1.5 });
     },
     { scope: containerRef }
   );
@@ -223,6 +246,7 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
   if (isFinished) return null;
 
   const nameChars = "RONALD".split("");
+  const portChars = "PORTFOLIO".split("");
 
   return (
     <div
@@ -236,26 +260,27 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
         className="absolute inset-0 w-full h-full pointer-events-none"
       />
 
-      {/* Atmospheric Central Glow */}
+      {/* Atmospheric Central Violet / White Glow */}
       <div
-        className="absolute w-[450px] h-[450px] rounded-full bg-[#530570]/25 blur-[120px] pointer-events-none"
+        ref={glowRef}
+        className="absolute w-[500px] h-[500px] rounded-full bg-gradient-to-r from-[#530570]/30 to-[#F5F3F2]/10 blur-[140px] pointer-events-none"
         aria-hidden="true"
       />
 
       {/* Center Singular Light Dot */}
       <div
         ref={dotRef}
-        className="w-3.5 h-3.5 rounded-full bg-[#F5F3F2] shadow-[0_0_24px_6px_#FFFFFF,0_0_40px_14px_#530570] absolute"
+        className="w-4 h-4 rounded-full bg-[#FFFFFF] shadow-[0_0_30px_10px_#FFFFFF,0_0_60px_20px_#530570] absolute z-20"
       />
 
-      {/* Kinetic Assembling Letters: RONALD */}
+      {/* 1. Assembling Name: RONALD */}
       <div
         ref={nameLettersRef}
-        className="flex items-center justify-center gap-1.5 md:gap-3 text-5xl md:text-8xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-[#FFFFFF] via-[#F5F3F2] to-[#6E7179] drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] z-10"
+        className="flex items-center justify-center gap-2 md:gap-4 text-5xl md:text-8xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-b from-[#FFFFFF] via-[#F5F3F2] to-[#6E7179] drop-shadow-[0_12px_28px_rgba(0,0,0,0.9)] z-10"
       >
         {nameChars.map((char, index) => (
           <span
-            key={`char-${char}-${index}`}
+            key={`char-ronald-${char}-${index}`}
             className="inline-block transform-gpu"
           >
             {char}
@@ -263,16 +288,23 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
         ))}
       </div>
 
-      {/* Morphed Target: PORTFOLIO */}
-      <h1
-        ref={portfolioTextRef}
-        className="absolute text-5xl md:text-8xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-b from-[#FFFFFF] via-[#F5F3F2] to-[#6E7179] drop-shadow-[0_12px_24px_rgba(0,0,0,0.9)] z-10"
+      {/* 2. Target Word: PORTFOLIO */}
+      <div
+        ref={portfolioLettersRef}
+        className="absolute flex items-center justify-center gap-1.5 md:gap-3 text-5xl md:text-8xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-b from-[#FFFFFF] via-[#F5F3F2] to-[#6E7179] drop-shadow-[0_15px_32px_rgba(0,0,0,0.95)] z-10"
       >
-        PORTFOLIO
-      </h1>
+        {portChars.map((char, index) => (
+          <span
+            key={`char-portfolio-${char}-${index}`}
+            className="inline-block transform-gpu"
+          >
+            {char}
+          </span>
+        ))}
+      </div>
 
       {/* Subtle Bottom Credit Badge */}
-      <div className="absolute bottom-8 text-[10px] font-mono tracking-[0.25em] text-[#9E9EA7]/50 uppercase">
+      <div className="absolute bottom-8 text-[10px] font-mono tracking-[0.3em] text-[#9E9EA7]/50 uppercase">
         Ronald • Full-Stack Developer
       </div>
     </div>
