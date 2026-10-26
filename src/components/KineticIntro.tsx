@@ -264,7 +264,7 @@ export function KineticIntro({ onComplete }: KineticIntroProps) {
   if (isFinished) return null;
 
   const nameChars = "RONALD".split("");
-  const portChars = "PORTFOLIO".split("");
+  const portChars = "PORTAFOLIO".split("");
 
   return (
     <div
