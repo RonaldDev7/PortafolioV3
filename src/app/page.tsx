@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { KineticIntro } from "@/components/KineticIntro";
 import { HeroSilhouette } from "@/components/HeroSilhouette";
-import { AboutVolumetric } from "@/components/AboutVolumetric";
+import { AboutCardReveal } from "@/components/AboutCardReveal";
 import { TimelineSection } from "@/components/TimelineSection";
 import { WaveCarousel } from "@/components/WaveCarousel";
 import { HexagonalDrum } from "@/components/HexagonalDrum";
@@ -39,7 +39,7 @@ export default function Home() {
 
         {/* 2. Sobre Mí & Filosofía Cinematográfica con Haz Volumétrico */}
         <div className="w-full">
-          <AboutVolumetric />
+          <AboutCardReveal />
         </div>
 
         {/* 3. Timeline Histórico con Tipografía Kinética */}
