@@ -6,7 +6,6 @@ import { HeroSilhouette } from "@/components/HeroSilhouette";
 import { AboutCardReveal } from "@/components/AboutCardReveal";
 import { TimelineSection } from "@/components/TimelineSection";
 import { WaveCarousel } from "@/components/WaveCarousel";
-import { HexagonalDrum } from "@/components/HexagonalDrum";
 import { ServicesAccordion } from "@/components/ServicesAccordion";
 import { ContactFooter } from "@/components/ContactFooter";
 
@@ -47,22 +46,17 @@ export default function Home() {
           <TimelineSection />
         </div>
 
-        {/* 4. Galería Wave Shader con Física y Deformación */}
+        {/* 4. Galería Wave Shader con Física y Deformación 3D */}
         <div className="w-full">
           <WaveCarousel />
         </div>
 
-        {/* 5. Prisma 3D Hexagonal con Casos de Estudio */}
-        <div className="w-full">
-          <HexagonalDrum />
-        </div>
-
-        {/* 6. Servicios e Ingeniería con Acordeón Satinado */}
+        {/* 5. Servicios e Ingeniería con Acordeón Satinado */}
         <div className="w-full">
           <ServicesAccordion />
         </div>
 
-        {/* 7. Footer Monumental y Contacto */}
+        {/* 6. Footer Monumental y Contacto */}
         <div className="w-full">
           <ContactFooter />
         </div>
