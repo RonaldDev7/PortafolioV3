@@ -1,149 +1,281 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
-import { MAIN_PROJECTS } from "@/data/projects";
+import React, { useState, useRef, useMemo } from "react";
+import FlexCarousel, { FlexCarouselEngine } from "./FlexCarousel";
+import { MAIN_PROJECTS, ProjectItem } from "@/data/projects";
+import { useLanguage } from "@/context/LanguageContext";
 
 export function WaveCarousel() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const { lang } = useLanguage();
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const carouselRef = useRef<FlexCarouselEngine | null>(null);
 
-  useEffect(() => {
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-    let velocity = 0;
-    let animId: number;
+  const isEs = lang === "es";
 
-    const updateCards = () => {
-      // Smooth decay of velocity towards 0
-      velocity *= 0.88;
+  // Build carousel items with exact format required by FlexCarousel
+  const carouselItems = useMemo(() => {
+    return MAIN_PROJECTS.map((proj) => ({
+      src: proj.image || "/projects/focus-web.png",
+      alt: isEs ? proj.title : (proj.titleEn || proj.title),
+      title: isEs ? proj.title : (proj.titleEn || proj.title),
+      subtitle: `${proj.year || "2024"} • ${isEs ? proj.category : (proj.categoryEn || proj.category)}`,
+    }));
+  }, [isEs]);
 
-      if (Math.abs(velocity) < 0.05) {
-        velocity = 0;
-      }
+  const currentProject: ProjectItem = MAIN_PROJECTS[activeIndex] || MAIN_PROJECTS[0];
 
-      cardsRef.current.forEach((card, idx) => {
-        if (!card) return;
-        const direction = idx % 2 === 0 ? 0.75 : -0.75;
-        const skew = velocity * direction;
-        const scale = Math.abs(velocity) > 0.1 ? 0.985 : 1;
-        card.style.transform = `perspective(1000px) skewY(${skew.toFixed(2)}deg) scale(${scale})`;
-      });
+  const handleSelectTab = (idx: number) => {
+    setActiveIndex(idx);
+    carouselRef.current?.goTo(idx);
+  };
 
-      if (Math.abs(velocity) > 0.05) {
-        animId = requestAnimationFrame(updateCards);
-      } else {
-        ticking = false;
-      }
-    };
+  const handlePrev = () => {
+    carouselRef.current?.prev();
+  };
 
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const delta = currentScrollY - lastScrollY;
-      lastScrollY = currentScrollY;
-
-      // Clamped skew velocity (max 10deg)
-      const targetVelocity = Math.max(-10, Math.min(10, delta * 0.35));
-      velocity += (targetVelocity - velocity) * 0.6;
-
-      if (!ticking) {
-        ticking = true;
-        animId = requestAnimationFrame(updateCards);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (animId) cancelAnimationFrame(animId);
-    };
-  }, []);
+  const handleNext = () => {
+    carouselRef.current?.next();
+  };
 
   return (
     <section
       id="projects"
-      ref={containerRef}
-      className="py-24 px-6 md:px-12 bg-[#F5F3F2] text-[#09080A] overflow-hidden select-none transition-colors duration-500"
+      className="py-24 px-4 sm:px-6 md:px-12 bg-[#09080A] text-[#F5F3F2] relative overflow-hidden select-none transition-colors duration-500"
     >
-      <div className="max-w-7xl mx-auto mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <span className="text-[11px] font-mono tracking-[0.25em] text-[#530570] font-bold uppercase block mb-2">
-            PROYECTOS DESTACADOS
-          </span>
-          <h2 className="text-4xl md:text-6xl font-extrabold uppercase tracking-tight font-sans">
-            FEATURED WORKS
-          </h2>
-        </div>
-        <p className="text-xs md:text-sm text-[#09080A]/70 max-w-md font-light">
-          Galería interactiva con física de inercia y curvatura adaptativa. Desliza o haz scroll para explorar.
-        </p>
-      </div>
+      {/* Background Volumetric Glows */}
+      <div
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] bg-[#530570]/20 blur-[160px] pointer-events-none -z-10"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute bottom-10 right-10 w-[450px] h-[350px] bg-[#8B1ED6]/10 blur-[140px] pointer-events-none -z-10"
+        aria-hidden="true"
+      />
 
-      {/* Horizontal Scroll Gallery Container */}
-      <div className="flex gap-8 overflow-x-auto pb-8 pt-4 no-scrollbar cursor-grab active:cursor-grabbing snap-x snap-mandatory">
-        {MAIN_PROJECTS.map((project, idx) => (
-          <div
-            key={project.id}
-            ref={(el) => {
-              cardsRef.current[idx] = el;
-            }}
-            className="flex-shrink-0 w-[320px] md:w-[440px] snap-center rounded-2xl bg-[#09080A] text-[#F5F3F2] p-8 flex flex-col justify-between shadow-2xl transition-transform duration-100 ease-out border border-[#09080A]/10 hover:border-[#530570]/50 will-change-transform transform-gpu"
-            style={{
-              transform: "perspective(1000px) skewY(0deg) scale(1)",
-              transformOrigin: "center center",
-            }}
-          >
-            <div>
-              <div className="flex items-center justify-between text-[11px] font-mono tracking-widest text-[#9E9EA7]/70 uppercase mb-4">
-                <span>0{idx + 1} / 0{MAIN_PROJECTS.length}</span>
-                <span className="text-[#530570] font-bold">{project.category}</span>
-              </div>
-
-              {/* Project Card Visual Preview Box */}
-              <div
-                className={`w-full h-44 rounded-xl bg-gradient-to-br ${project.gradient} mb-6 flex items-center justify-center p-4 relative overflow-hidden group`}
-              >
-                <div className="absolute inset-0 bg-[#530570]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="text-lg md:text-xl font-bold tracking-tight text-[#F5F3F2]/90 text-center font-sans">
-                  {project.title}
-                </span>
-              </div>
-
-              <h3 className="text-xl md:text-2xl font-bold tracking-tight text-[#F5F3F2] mb-3 font-sans">
-                {project.title}
-              </h3>
-              <p className="text-xs md:text-sm text-[#9E9EA7] font-light leading-relaxed mb-6">
-                {project.description}
-              </p>
+      <div className="max-w-7xl mx-auto">
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#530570]/20 border border-[#A855F7]/30 text-[#A855F7] text-[11px] font-mono tracking-widest uppercase mb-3 backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#A855F7] animate-pulse" />
+              {isEs ? "PROYECTOS DESTACADOS // 2023 — 2025" : "FEATURED PROJECTS // 2023 — 2025"}
             </div>
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold uppercase tracking-tight text-[#F5F3F2]">
+              {isEs ? "PROYECTOS & ARQUITECTURA" : "ENGINEERING & ARCHITECTURE"}
+            </h2>
+          </div>
 
-            <div>
-              <div className="flex flex-wrap gap-2 mb-6">
-                {project.technologies.map((tech) => (
+          <p className="text-xs sm:text-sm text-[#9E9EA7] max-w-md font-light leading-relaxed">
+            {isEs
+              ? "Galería 3D interactiva con física WebGL de distorsión líquida. Arrastra, haz scroll o selecciona cualquier proyecto para inspeccionar arquitectura y enlaces."
+              : "Interactive 3D WebGL liquid lens gallery. Drag, scroll or select projects to inspect architectural details and code."}
+          </p>
+        </div>
+
+        {/* Project Quick-Switch Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
+          {MAIN_PROJECTS.map((proj, idx) => {
+            const isActive = idx === activeIndex;
+            return (
+              <button
+                key={proj.id}
+                onClick={() => handleSelectTab(idx)}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono tracking-wider transition-all duration-300 whitespace-nowrap cursor-pointer border ${
+                  isActive
+                    ? "bg-[#530570]/40 border-[#A855F7] text-[#F5F3F2] shadow-[0_0_15px_rgba(168,85,247,0.35)]"
+                    : "bg-white/[0.03] border-white/10 text-[#9E9EA7] hover:text-[#F5F3F2] hover:border-white/20 hover:bg-white/[0.06]"
+                }`}
+              >
+                <span className={isActive ? "text-[#A855F7] font-bold" : "text-[#9E9EA7]/60"}>
+                  0{idx + 1}
+                </span>
+                <span>{isEs ? proj.title : (proj.titleEn || proj.title)}</span>
+                {proj.year && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/80">
+                    {proj.year}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 3D WebGL Liquid Flex Carousel Container */}
+        <div className="relative w-full rounded-2xl bg-gradient-to-b from-white/[0.03] to-transparent p-2 sm:p-4 border border-white/10 backdrop-blur-sm shadow-2xl">
+          {/* Navigation Arrows */}
+          <div className="absolute top-6 right-6 z-20 flex items-center gap-2">
+            <button
+              onClick={handlePrev}
+              aria-label={isEs ? "Proyecto anterior" : "Previous project"}
+              className="w-9 h-9 rounded-full bg-[#121115]/80 hover:bg-[#530570] border border-white/10 hover:border-[#A855F7]/60 text-[#F5F3F2] flex items-center justify-center transition-all duration-200 cursor-pointer backdrop-blur-md group"
+            >
+              <svg
+                className="w-4 h-4 transform group-hover:-translate-x-0.5 transition-transform"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={handleNext}
+              aria-label={isEs ? "Siguiente proyecto" : "Next project"}
+              className="w-9 h-9 rounded-full bg-[#121115]/80 hover:bg-[#530570] border border-white/10 hover:border-[#A855F7]/60 text-[#F5F3F2] flex items-center justify-center transition-all duration-200 cursor-pointer backdrop-blur-md group"
+            >
+              <svg
+                className="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* User Requested FlexCarousel Block */}
+          <div className="w-full h-[520px] sm:h-[620px] md:h-[680px] relative">
+            <FlexCarousel
+              ref={carouselRef}
+              items={carouselItems}
+              preset="liquid"
+              intro="rise"
+              cardHeight={0.68}
+              gap={16}
+              squeeze={0.15}
+              focusOnClick
+              captions
+              fit="natural"
+              radius={0}
+              lensWidth={0.74}
+              lensHeight={1.18}
+              tilt={62}
+              roundness={1}
+              bend={0.34}
+              reach={0.38}
+              curl="twist"
+              dispersion={0.45}
+              liquid={0}
+              followCursor={false}
+              autoplay={false}
+              interval={4}
+              captureWheel
+              onChange={(index: number) => setActiveIndex(index)}
+            />
+          </div>
+        </div>
+
+        {/* Detailed Active Project Showcase Card */}
+        <div className="mt-8 rounded-2xl bg-[#121115]/90 border border-white/10 p-6 md:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden transition-all duration-300">
+          {/* Subtle Ambient Edge Glow */}
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#A855F7]/50 to-transparent" />
+          <div className="absolute top-0 right-0 w-80 h-80 bg-[#530570]/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 relative z-10">
+            {/* Left Column: Project Meta & Description */}
+            <div className="flex-1 max-w-3xl">
+              <div className="flex flex-wrap items-center gap-3 mb-3">
+                <span className="font-mono text-xs font-bold text-[#A855F7] tracking-wider uppercase bg-[#530570]/25 px-2.5 py-1 rounded-md border border-[#A855F7]/30">
+                  {currentProject.year || "2024"}
+                </span>
+                <span className="text-xs font-mono text-[#9E9EA7] tracking-widest uppercase">
+                  {isEs ? currentProject.category : (currentProject.categoryEn || currentProject.category)}
+                </span>
+                {currentProject.stats && (
+                  <span className="text-[11px] font-mono text-emerald-400/90 bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded">
+                    {currentProject.stats}
+                  </span>
+                )}
+              </div>
+
+              <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F5F3F2] mb-3">
+                {isEs ? currentProject.title : (currentProject.titleEn || currentProject.title)}
+              </h3>
+
+              <p className="text-sm sm:text-base text-[#9E9EA7] font-light leading-relaxed mb-6">
+                {isEs
+                  ? currentProject.description
+                  : (currentProject.descriptionEn || currentProject.description)}
+              </p>
+
+              {/* Technologies Pills */}
+              <div className="flex flex-wrap items-center gap-2">
+                {currentProject.technologies.map((tech) => (
                   <span
                     key={tech}
-                    className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-[#F5F3F2]/10 text-[#F5F3F2]/80 border border-[#F5F3F2]/5"
+                    className="px-2.5 py-1 rounded-md text-xs font-mono bg-[#1A1822] text-[#F5F3F2] border border-white/10 hover:border-[#A855F7]/40 transition-colors"
                   >
                     {tech}
                   </span>
                 ))}
               </div>
+            </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-[#F5F3F2]/10">
-                <span className="text-xs font-mono text-[#9E9EA7]/70">Caso de estudio</span>
+            {/* Right Column: Action Buttons */}
+            <div className="flex flex-row lg:flex-col items-center lg:items-end justify-start gap-3 flex-shrink-0 pt-2">
+              {currentProject.demoUrl && currentProject.demoUrl !== "#" && (
                 <a
-                  href={`#projects`}
-                  className="text-xs font-semibold text-[#F5F3F2] hover:text-[#530570] transition-colors flex items-center gap-1 group"
+                  href={currentProject.demoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#530570] hover:bg-[#8B1ED6] text-white text-xs font-mono font-semibold transition-all duration-200 shadow-lg shadow-[#530570]/30 hover:shadow-[#8B1ED6]/40 hover:scale-[1.02] cursor-pointer"
                 >
-                  <span>Explorar</span>
-                  <span className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200">
-                    ↗
-                  </span>
+                  <span>{isEs ? "Ver demo" : "Live Demo"}</span>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
                 </a>
-              </div>
+              )}
+
+              {currentProject.repoUrl && currentProject.repoUrl !== "#" && (
+                <a
+                  href={currentProject.repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/15 hover:border-white/30 text-[#F5F3F2] text-xs font-mono font-semibold transition-all duration-200 hover:scale-[1.02] cursor-pointer"
+                >
+                  <span>{isEs ? "Repositorio" : "Repository"}</span>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                    />
+                  </svg>
+                </a>
+              )}
+
+              {currentProject.codeUrl && currentProject.codeUrl !== "#" && (
+                <a
+                  href={currentProject.codeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/15 hover:border-white/30 text-[#F5F3F2] text-xs font-mono font-semibold transition-all duration-200 hover:scale-[1.02] cursor-pointer"
+                >
+                  <span>{isEs ? "Código" : "Source Code"}</span>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                    />
+                  </svg>
+                </a>
+              )}
             </div>
           </div>
-        ))}
+        </div>
       </div>
     </section>
   );
 }
+
+export default WaveCarousel;
