@@ -400,7 +400,7 @@ export function ServicesAccordion() {
                       {/* Action CTA Button */}
                       <div className="pt-1">
                         <a
-                          href={`mailto:ronaldalvarezjsjs@gmail.com?subject=${encodeURIComponent(
+                          href={`mailto:alvarezronalddev@gmail.com?subject=${encodeURIComponent(
                             `Propuesta de Proyecto - ${isEs ? service.titleEs : service.titleEn}`
                           )}`}
                           onClick={(e) => e.stopPropagation()}
